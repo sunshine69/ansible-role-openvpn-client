@@ -1,0 +1,47 @@
+---
+# tasks file for ansible-role-openvpn-client
+
+- include_tasks: "{{ ansible_os_family }}-install.yml"
+
+- name: install pip module pyotp
+  pip:
+    name: pyotp
+    state: present
+
+- name: Create dir
+  file:
+    path: "{{ vpn_remote_dir }}"
+    state: directory
+
+- name: Deploy the python scripts
+  template:
+    src: vpn-python-helper.py
+    dest: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}.py"
+    mode: "0700"
+    owner: root
+    group: root
+
+- name: Deploy the monitor shell script
+  template:
+    src: vpn-watcher.sh
+    dest: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-vpn-watcher.sh"
+    mode: "0700"
+    owner: root
+    group: root
+
+- name: Deploy the cron task to run the monitor shell script
+  cron:
+    name: "{{ vpn_client_profile_name }}-vpn-watcher"
+    job: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-vpn-watcher.sh"
+    minute: "*/5"
+
+- name: Deploy the vpn profile
+  copy:
+    src: "{{ vpn_client_profile_path }}"
+    dest: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}.ovpn"
+    mode: "0600"
+    owner: root
+    group: root
+
+- name: Run the monitor script for first time
+  shell: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-vpn-watcher.sh &"

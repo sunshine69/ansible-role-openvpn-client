@@ -1,47 +1,17 @@
 ---
 # tasks file for ansible-role-openvpn-client
 
-- include_tasks: "{{ ansible_os_family }}-install.yml"
+- include_tasks: deploy-on-host.yml
+  when: vpn_client_deploy_on_host|default(False)
 
-- name: install pip module pyotp
-  pip:
-    name: pyotp
-    state: present
+# This is a bit more complex but offer better solutions when we want to access
+# the server via its EIP. Using the direct above - we will lose the ability to
+# access the service exposed via its EIP if the VPN set redirect default gateway to
+# the vpn tunnel. We need to use ELB or other nginx to forward the request.
 
-- name: Create dir
-  file:
-    path: "{{ vpn_remote_dir }}"
-    state: directory
+# By using the vpn docker container we wont run into this issue and we can run
+# each command that needs the VPN gateway in the container using the docker
+# --net=container:<container_name> option.
 
-- name: Deploy the python scripts
-  template:
-    src: vpn-python-helper.py
-    dest: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}.py"
-    mode: "0700"
-    owner: root
-    group: root
-
-- name: Deploy the monitor shell script
-  template:
-    src: vpn-watcher.sh
-    dest: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-vpn-watcher.sh"
-    mode: "0700"
-    owner: root
-    group: root
-
-- name: Deploy the cron task to run the monitor shell script
-  cron:
-    name: "{{ vpn_client_profile_name }}-vpn-watcher"
-    job: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-vpn-watcher.sh"
-    minute: "*/5"
-
-- name: Deploy the vpn profile
-  copy:
-    src: "{{ vpn_client_profile_path }}"
-    dest: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}.ovpn"
-    mode: "0600"
-    owner: root
-    group: root
-
-- name: Run the monitor script for first time
-  shell: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-vpn-watcher.sh &"
+- include_tasks: deploy-on-docker.yml
+  when: vpn_client_deploy_on_docker|default(True)

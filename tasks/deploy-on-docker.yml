@@ -1,0 +1,26 @@
+# make sure role `docker` get applied so we have docker
+
+- name: Deploy the start script
+  template:
+    src: vpn-client-docker-start.sh
+    dest: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-docker.sh"
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Deploy the vpn profile
+  copy:
+    src: "{{ vpn_client_profile_path }}"
+    dest: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}.ovpn"
+    mode: "0600"
+    owner: root
+    group: root
+
+- name: Deploy cron job to monitor
+  cron:
+    name: "vpn-client-docker-{{ vpn_client_profile_name }}"
+    job: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-docker.sh {{ vpn_client_profile_name }}.ovpn {{ vpn_client_pin }} {{ vpn_client_otp_password }}"
+    minutes: "*/5"
+
+- name: Run the script for first time
+  shell: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-docker.sh {{ vpn_client_profile_name }}.ovpn {{ vpn_client_pin }} {{ vpn_client_otp_password }}"
