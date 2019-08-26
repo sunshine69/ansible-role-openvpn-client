@@ -3,6 +3,11 @@
 
 - include_tasks: "{{ ansible_os_family }}-install.yml"
 
+- name: install pip module pyotp
+  pip:
+    name: pyotp
+    state: present
+
 - name: Create dir
   file:
     path: "{{ vpn_remote_dir }}"
@@ -39,4 +44,4 @@
     group: root
 
 - name: Run the monitor script for first time
-  shell: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-vpn-watcher.sh"
+  shell: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-vpn-watcher.sh &"
