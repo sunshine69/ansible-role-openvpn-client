@@ -1,6 +1,8 @@
 ---
 # tasks file for ansible-role-openvpn-client
 
+- include_tasks: "{{ ansible_os_family }}-install.yml"
+
 - name: Create dir
   file:
     path: "{{ vpn_remote_dir }}"
