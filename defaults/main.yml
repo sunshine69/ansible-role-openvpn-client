@@ -10,4 +10,4 @@ vpn_client_pin:
 vpn_client_otp_password:
 
 # To store all scripts this role deployed
-vpn_remote_dir: /etc/openvpn/scripts
+vpn_remote_dir: /usr/local/ansible_install/vpn-scripts

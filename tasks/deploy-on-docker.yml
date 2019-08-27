@@ -1,7 +1,7 @@
 # make sure role `docker` get applied so we have docker
 
 - name: Deploy the start script
-  template:
+  copy:
     src: vpn-client-docker-start.sh
     dest: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-docker.sh"
     owner: root
@@ -16,11 +16,21 @@
     owner: root
     group: root
 
+- name: Deploy the config file
+  copy:
+    content: |
+      JENKINS_VPN_PASSWORD={{ vpn_client_pin }}
+      JENKINS_OTP_PASSWORD={{ vpn_client_otp_password }}
+    dest: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}.config"
+    mode: "0600"
+    owner: root
+    group: root
+
 - name: Deploy cron job to monitor
   cron:
     name: "vpn-client-docker-{{ vpn_client_profile_name }}"
-    job: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-docker.sh {{ vpn_client_profile_name }}.ovpn {{ vpn_client_pin }} {{ vpn_client_otp_password }}"
-    minutes: "*/5"
+    job: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-docker.sh {{ vpn_client_profile_name }}.ovpn >/dev/null 2>&1"
+    minute: "*/5"
 
 - name: Run the script for first time
-  shell: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-docker.sh {{ vpn_client_profile_name }}.ovpn {{ vpn_client_pin }} {{ vpn_client_otp_password }}"
+  shell: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-docker.sh {{ vpn_client_profile_name }}.ovpn"
