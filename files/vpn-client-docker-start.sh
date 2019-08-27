@@ -1,8 +1,9 @@
 #!/bin/sh -x
 
 # Run from root cron job like this
-# /home/ubuntu/src/xvt-jenkins/scripts/jenkins-vpn.sh <vpn_profile_file_name> <PIN> <OTP_PASS>
+# /home/ubuntu/src/xvt-jenkins/scripts/jenkins-vpn.sh <vpn_profile_file_name> <PIN> <OTP_PASS> [<ACTION>]
 # It will start a openvpn container to connect to the vpn
+# ACTION default to `start`, it can be start/stop/restart.
 # The other container can use the network using docker option --net=container:<container_name>
 
 JENKINS_VPN_PROFILE_FILE_NAME=${JENKINS_VPN_PROFILE_FILE_NAME:-$1}
