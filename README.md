@@ -4,6 +4,9 @@ Role Name
 Deploy openvpn client helper to maintain stable vpn conneciton in remote host
 with support for *OTP passphrase*
 
+For the docker deployment the benefit is that we have a separation in network between the host and the VPN. Any commands that needs to use the vpn network will be running as a docker container using docker option `--net=container:<container_name>`. 
+
+
 Requirements
 ------------
 
