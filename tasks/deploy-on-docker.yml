@@ -20,7 +20,7 @@
   cron:
     name: "vpn-client-docker-{{ vpn_client_profile_name }}"
     job: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-docker.sh {{ vpn_client_profile_name }}.ovpn {{ vpn_client_pin }} {{ vpn_client_otp_password }}"
-    minutes: "*/5"
+    minute: "*/5"
 
 - name: Run the script for first time
   shell: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-docker.sh {{ vpn_client_profile_name }}.ovpn {{ vpn_client_pin }} {{ vpn_client_otp_password }}"
