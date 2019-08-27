@@ -80,7 +80,7 @@ EOF
             # set it to something > 5. If we spawn from cron better to quit
             # here
             reset_count=100
-            if [ $reset_count -lt 5 ] then
+            if [ $reset_count -lt 5 ]; then
                 sleep 120
             fi
             vpn_status=$(docker inspect --format='{{json .State.Health.Status}}' $JENKIN_VPN_CONTAINER_NAME 2>/dev/null)
