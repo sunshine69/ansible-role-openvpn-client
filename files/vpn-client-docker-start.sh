@@ -1,14 +1,22 @@
-#!/bin/sh
+#!/bin/sh -e
 
 # Run from root cron job like this
-# /home/ubuntu/src/xvt-jenkins/scripts/jenkins-vpn.sh <vpn_profile_file_name> <PIN> <OTP_PASS> [<ACTION>]
+# /home/ubuntu/src/xvt-jenkins/scripts/jenkins-vpn.sh <vpn_profile_file_name> [<ACTION>]
 # It will start a openvpn container to connect to the vpn
 # ACTION default to `start`, it can be start/stop/restart.
 # The other container can use the network using docker option --net=container:<container_name>
 
+SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
+echo "SCRIPT_DIR: $SCRIPT_DIR"
+
 JENKINS_VPN_PROFILE_FILE_NAME=${JENKINS_VPN_PROFILE_FILE_NAME:-$1}
-JENKINS_VPN_PASSWORD=${JENKINS_VPN_PASSWORD:-$2}
-JENKINS_OTP_PASSWORD=${JENKINS_OTP_PASSWORD:-$3}
+JENKINS_VPN_PROFILE_NAME=$(basename $JENKINS_VPN_PROFILE_FILE_NAME .ovpn)
+
+. $SCRIPT_DIR/${JENKINS_VPN_PROFILE_NAME}.config
+
+# The config should define the below var
+#JENKINS_VPN_PASSWORD=
+#JENKINS_OTP_PASSWORD=
 
 JENKIN_VPN_CONTAINER_NAME=$(basename $JENKINS_VPN_PROFILE_FILE_NAME .ovpn)
 # Quit if there is one script already running
@@ -18,11 +26,9 @@ echo "Container name: $JENKIN_VPN_CONTAINER_NAME"
 touch /tmp/$JENKIN_VPN_CONTAINER_NAME
 trap "rm -f /tmp/$JENKIN_VPN_CONTAINER_NAME" EXIT
 
-SCRIPT_DIR="$( cd "$( dirname "$0" )" && pwd )"
-echo "SCRIPT_DIR: $SCRIPT_DIR"
-
 WORKSPACE=${WORKSPACE:-$SCRIPT_DIR}
-ACTION=${ACTION:-$4}
+
+ACTION=${ACTION:-$2}
 [ -z "$ACTION" ] && ACTION="start"
 
 if [ -f "/.dockerenv" ]; then
