@@ -1,7 +1,7 @@
 # make sure role `docker` get applied so we have docker
 
 - name: Deploy the start script
-  template:
+  copy:
     src: vpn-client-docker-start.sh
     dest: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}-docker.sh"
     owner: root
