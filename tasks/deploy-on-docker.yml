@@ -1,5 +1,10 @@
 # make sure role `docker` get applied so we have docker
 
+- name: Make sure vpn_remote_dir exists
+  file:
+    path: "{{ vpn_remote_dir }}"
+    state: directory
+
 - name: Deploy the start script
   copy:
     src: vpn-client-docker-start.sh
