@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/sh
 
 # Run from root cron job like this
 # /home/ubuntu/src/xvt-jenkins/scripts/jenkins-vpn.sh <vpn_profile_file_name> [<ACTION>]
