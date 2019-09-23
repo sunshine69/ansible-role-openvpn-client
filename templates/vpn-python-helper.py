@@ -6,9 +6,15 @@ os.chdir("{{ vpn_remote_dir }}")
 
 os.system("rm -f {{ vpn_client_profile_name }}.pass")
 
-fc = """s
-{{ vpn_client_pin }}%s
-""" % pyotp.TOTP('{{ vpn_client_otp_password }}').now()
+{% if vpn_client_otp_password is defined and vpn_client_otp_password != '' %}
+otp_token = pyotp.TOTP('{{ vpn_client_otp_password }}').now()
+{% else %}
+otp_token = ''
+{% endif %}
+
+fc = """%s
+{{ vpn_client_password }}%s
+""" % (vpn_client_username, otp_token)
 with open('{{ vpn_client_profile_name }}.pass','w') as pf:
     pf.write(fc)
 

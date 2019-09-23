@@ -15,6 +15,7 @@ JENKINS_VPN_PROFILE_NAME=$(basename $JENKINS_VPN_PROFILE_FILE_NAME .ovpn)
 . $SCRIPT_DIR/${JENKINS_VPN_PROFILE_NAME}.config
 
 # The config should define the below var
+#JENKINS_VPN_USERNAME=
 #JENKINS_VPN_PASSWORD=
 #JENKINS_OTP_PASSWORD=
 
@@ -43,10 +44,13 @@ start_vpn() {
         echo "0 - Status: $vpn_status"
         if [ "$vpn_status" != '"healthy"' ] && [ "$vpn_status" != '"starting"' ] && [ "$vpn_status" != 'completed' ]; then
             reset_count=$((reset_count+1))
-            OTP_CODE=$(docker run --rm --entrypoint python3 xvtsolutions/alpine-python3-aws-ansible:2.8.1 -c "import pyotp; print(pyotp.TOTP('$JENKINS_OTP_PASSWORD').now())")
-
+            if [ ! -z "${JENKINS_OTP_PASSWORD}" ]; then
+                OTP_CODE=$(docker run --rm --entrypoint python3 xvtsolutions/alpine-python3-aws-ansible:2.8.1 -c "import pyotp; print(pyotp.TOTP('$JENKINS_OTP_PASSWORD').now())")
+            else
+                OTP_CODE=''
+            fi
             cat <<EOF > $WORKSPACE/$JENKIN_VPN_CONTAINER_NAME.pass
-jenkins
+${JENKINS_VPN_USERNAME}
 ${JENKINS_VPN_PASSWORD}${OTP_CODE}
 EOF
             docker run --rm --entrypoint sed $DOCKER_VOL_OPT --workdir $WORKSPACE xvtsolutions/alpine-python3-aws-ansible:2.8.1 -i "s/auth\-user\-pass.*\$/auth-user-pass $JENKIN_VPN_CONTAINER_NAME.pass/g" $JENKINS_VPN_PROFILE_FILE_NAME

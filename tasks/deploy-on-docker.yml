@@ -24,7 +24,8 @@
 - name: Deploy the config file
   copy:
     content: |
-      JENKINS_VPN_PASSWORD={{ vpn_client_pin }}
+      JENKINS_VPN_USERNAME={{ vpn_client_username }}
+      JENKINS_VPN_PASSWORD={{ vpn_client_password }}
       JENKINS_OTP_PASSWORD={{ vpn_client_otp_password }}
     dest: "{{ vpn_remote_dir }}/{{ vpn_client_profile_name }}.config"
     mode: "0600"
