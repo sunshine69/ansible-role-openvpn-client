@@ -14,18 +14,25 @@ JENKINS_VPN_PROFILE_NAME=$(basename $JENKINS_VPN_PROFILE_FILE_NAME .ovpn)
 
 . $SCRIPT_DIR/${JENKINS_VPN_PROFILE_NAME}.config
 
-# The config should define the below var
+# The config fiel above should define the below var
 #JENKINS_VPN_USERNAME=
 #JENKINS_VPN_PASSWORD=
 #JENKINS_OTP_PASSWORD=
 
 JENKIN_VPN_CONTAINER_NAME=$(basename $JENKINS_VPN_PROFILE_FILE_NAME .ovpn)
+
 # Quit if there is one script already running
 [ -f "/tmp/$JENKIN_VPN_CONTAINER_NAME" ] && exit 0
 
 echo "Container name: $JENKIN_VPN_CONTAINER_NAME"
 touch /tmp/$JENKIN_VPN_CONTAINER_NAME
 trap "rm -f /tmp/$JENKIN_VPN_CONTAINER_NAME" EXIT
+
+vpn_status=$(docker inspect --format='{{json .State.Status}}' $JENKIN_VPN_CONTAINER_NAME 2>/dev/null)
+
+if [ "$vpn_status" = '"exited"' ]; then
+    docker rm -f $JENKIN_VPN_CONTAINER_NAME
+fi
 
 WORKSPACE=${WORKSPACE:-$SCRIPT_DIR}
 
@@ -45,7 +52,7 @@ start_vpn() {
         if [ "$vpn_status" != '"healthy"' ] && [ "$vpn_status" != '"starting"' ] && [ "$vpn_status" != 'completed' ]; then
             reset_count=$((reset_count+1))
             if [ ! -z "${JENKINS_OTP_PASSWORD}" ]; then
-                OTP_CODE=$(docker run --rm --entrypoint python3 xvtsolutions/alpine-python3-aws-ansible:2.8.1 -c "import pyotp; print(pyotp.TOTP('$JENKINS_OTP_PASSWORD').now())")
+                OTP_CODE=$(docker run --rm --entrypoint python3 xvtsolutions/alpine-python3-aws-ansible:2.8.4 -c "import pyotp; print(pyotp.TOTP('$JENKINS_OTP_PASSWORD').now())")
             else
                 OTP_CODE=''
             fi
@@ -53,10 +60,11 @@ start_vpn() {
 ${JENKINS_VPN_USERNAME}
 ${JENKINS_VPN_PASSWORD}${OTP_CODE}
 EOF
-            docker run --rm --entrypoint sed $DOCKER_VOL_OPT --workdir $WORKSPACE xvtsolutions/alpine-python3-aws-ansible:2.8.1 -i "s/auth\-user\-pass.*\$/auth-user-pass $JENKIN_VPN_CONTAINER_NAME.pass/g" $JENKINS_VPN_PROFILE_FILE_NAME
+            chmod 0600 $WORKSPACE/$JENKIN_VPN_CONTAINER_NAME.pass
+            docker run --rm --entrypoint sed $DOCKER_VOL_OPT --workdir $WORKSPACE xvtsolutions/alpine-python3-aws-ansible:2.8.4 -i "s/auth\-user\-pass.*\$/auth-user-pass $JENKIN_VPN_CONTAINER_NAME.pass/g" $JENKINS_VPN_PROFILE_FILE_NAME
 
             vpn_status=$(docker inspect --format='{{json .State.Health.Status}}' $JENKIN_VPN_CONTAINER_NAME 2>/dev/null)
-                echo "1 - Status: $vpn_status"
+            echo "1 - Status: $vpn_status"
             if [ "$vpn_status" = '"healthy"' ] || [ "$vpn_status" = 'completed' ]; then
               echo "container already started and status is healthy"
             else
@@ -70,8 +78,11 @@ EOF
               echo Wait maximum 5 minutes until the vpn status is healthy
               c=0
               while [ $c -lt 60 ]; do
-                if `docker logs --tail 5 $JENKIN_VPN_CONTAINER_NAME | grep 'Initialization Sequence Completed' >/dev/null 2>&1`; then
-                    echo "Got Initialization Sequence Completed"
+                vpn_status=$(docker inspect --format='{{json .State.Status}}' $JENKIN_VPN_CONTAINER_NAME 2>/dev/null)
+                if [ "$vpn_status" = '"healthy"' ]; then
+                #if `docker logs --tail 5 $JENKIN_VPN_CONTAINER_NAME | grep 'Initialization Sequence Completed' >/dev/null 2>&1`; then
+                    #echo "Got Initialization Sequence Completed"
+                    echo "Container state is healthy"
                     vpn_status='completed'
                 break
                 else
