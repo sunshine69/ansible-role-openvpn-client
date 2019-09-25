@@ -6,8 +6,9 @@ vpn_client_profile_name:
 
 # The file path to the profile - should be vaulted
 vpn_client_profile_path: "{{ inventory_dir }}/../files/vpn/{{ vpn_client_profile_name }}.ovpn"
-vpn_client_pin:
-vpn_client_otp_password:
+vpn_client_username: <required>
+vpn_client_password: <required>
+vpn_client_otp_password: <optional>
 
 # To store all scripts this role deployed
 vpn_remote_dir: /usr/local/ansible_install/vpn-scripts
